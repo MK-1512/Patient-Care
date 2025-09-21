@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome - PatientCare System{% endblock %}
+
+{% block content %}
+    <h1>Welcome to PatientCare</h1>
+    <p>
+        This system detects hand gestures, facial expressions, and motion to help monitor safety and assist communication.
+    </p>
+
+    <h2>About This Project</h2>
+    <p>
+        This system utilizes computer vision and machine learning techniques through MediaPipe and OpenCV
+        to detect hand gestures, facial expressions, and significant motion.
+    </p>
+    <p>
+        The goal is to provide a non-intrusive way to monitor the well-being of Patients and enable them
+        to communicate needs or distress signals easily, especially in emergency situations. Activity is logged
+        for review by caregivers.
+    </p>
+
+    {# Button to start the detection script #}
+    <form method="POST" action="{% url 'run_detection' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Start Detection</button>
+    </form>
+
+    {# Conditional Button for Activity Log (Admin Only) #}
+    {% if user.is_authenticated and user.is_superuser %}
+        <a href="{% url 'activity_report' %}" class="btn btn-secondary" style="margin-top: 1rem;">View Daily Activity Report</a>
+    {% endif %}
+    {# --- End Conditional Button --- #}
+
+    {# Ensure there is no "View Session Recordings" text or link here #}
+
+{% endblock %}

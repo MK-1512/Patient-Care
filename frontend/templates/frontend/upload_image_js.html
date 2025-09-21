@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Media Detection{% endblock %}
+
+{% block content %}
+<h1>Upload Image or Video </h1>
+<p>Upload an image (PNG, JPG, etc.) or video file (MP4, MOV, etc.). Detection will run in your browser.</p>
+
+<div class="upload-area">
+    <label for="mediaFile" class="file-label">Choose File:</label>
+    <input type="file" id="mediaFile" accept="image/*,video/*">
+</div>
+
+<div id="status" class="status-message">Select an image or video to begin. Models will be loaded.</div>
+
+<div class="results-container-js">
+    <div class="media-column-js">
+        <h2>Uploaded Media:</h2>
+        <div id="mediaDisplay">
+             <img id="uploadedImage" src="#" alt="Uploaded Image" style="display: none; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+             <video id="uploadedVideo" controls muted loop playsinline style="display: none; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd;"></video>
+        </div>
+    </div>
+    <div class="results-column-js">
+        <h2>Detection Results:</h2>
+        <div class="result-item-js">
+            <strong>Facial Expression:</strong>
+            <span id="expressionResult">N/A</span>
+        </div>
+        <div class="result-item-js">
+            <strong>Hand Gesture:</strong>
+            <span id="gestureResult">N/A</span>
+        </div>
+        <div class="result-item-js">
+            <strong>Motion Detection:</strong>
+            <span id="motionResult">N/A</span> {# Simplified label #}
+        </div>
+    </div>
+</div>
+</br>
+<a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+{% endblock %} {# End of block content #}
+
+{% block head_extra %}
+{# MediaPipe Vision Task Library #}
+<script type="module" src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/wasm/vision_bundle.js"></script>
+
+<style>
+    
+    .upload-area { margin: 2rem 0; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; text-align: center; }
+    .file-label { font-weight: 500; margin-right: 1rem; }
+    #mediaFile { border: 1px solid #ccc; display: inline-block; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+    .status-message { margin-top: 1rem; font-style: italic; color: #6c757d; text-align: center; min-height: 1.2em; }
+    .results-container-js { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 2rem; border-top: 1px solid #eee; padding-top: 2rem; align-items: flex-start; text-align: left; }
+    .media-column-js, .results-column-js { flex: 1; min-width: 280px; }
+    .media-column-js h2, .results-column-js h2 { margin-bottom: 1rem; color: #0056b3; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+    #uploadedImage, #uploadedVideo { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .result-item-js { margin-bottom: 1rem; padding: 0.5rem; background-color: #e9ecef; border-radius: 4px; }
+    .result-item-js strong { display: block; margin-bottom: 0.25rem; color: #495057; }
+    .result-item-js span { font-size: 1.1em; font-weight: 500; }
+</style>
+{% endblock %} {# End of block head_extra #}
+{% block scripts %}
+{# Contains the JavaScript logic #}
+<script type="module">
+    import {
+        GestureRecognizer, FaceLandmarker, HandLandmarker, PoseLandmarker,
+        FilesetResolver, DrawingUtils
+    } from "https://cdn.skypack.dev/@mediapipe/tasks-vision@latest";
+
+    const mediaFileElement = document.getElementById('mediaFile');
+    const uploadedImageElement = document.getElementById('uploadedImage');
+    const uploadedVideoElement = document.getElementById('uploadedVideo');
+    const statusElement = document.getElementById('status');
+    const gestureResultElement = document.getElementById('gestureResult');
+    const expressionResultElement = document.getElementById('expressionResult');
+    const motionResultElement = document.getElementById('motionResult');
+
+    const GESTURE_MODEL_PATH = "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
+    const FACE_LANDMARKER_MODEL_PATH = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+    const POSE_LANDMARKER_MODEL_PATH = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+    const HAND_LANDMARKER_MODEL_PATH = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+    const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+
+    const defaultGestures = ['Closed_Fist', 'Thumb_Down', 'Open_Palm', 'Victory', 'Pointing_Up', 'Thumb_Up', 'None', 'ILoveYou'];
+    const assignedGestures = ['Emergency', 'Not Good', 'Request Doctor', 'All set', 'Request Food', 'Well & Good', 'None', 'I Love You'];
+
+    let gestureRecognizer; let faceLandmarker; let poseLandmarker; let handLandmarker;
+    let visionTasksFileset;
+    let lastVideoTime = -1;
+    let videoProcessingActive = false;
+    const motionThreshold = 5; 
+    let prevFramePositions = { head: null, shoulder: null, left_hand: null, right_hand: null };
+    let lastMotionDetected = "None";
+
+    async function initializeMediaPipe() { 
+        statusElement.textContent = 'Loading MediaPipe models... Please wait.';
+        console.log("Attempting to initialize MediaPipe...");
+        try {
+             if (typeof GestureRecognizer === 'undefined' || typeof FaceLandmarker === 'undefined' || typeof FilesetResolver === 'undefined' || typeof PoseLandmarker === 'undefined' || typeof HandLandmarker === 'undefined') {
+                 throw new Error("One or more MediaPipe task classes failed to import.");
+             }
+            visionTasksFileset = await FilesetResolver.forVisionTasks(WASM_PATH);
+            console.log("FilesetResolver created.");
+           
+            gestureRecognizer = await GestureRecognizer.createFromOptions(visionTasksFileset, { baseOptions: { modelAssetPath: GESTURE_MODEL_PATH, delegate: "GPU" }, runningMode: "VIDEO", numHands: 2 });
+            faceLandmarker = await FaceLandmarker.createFromOptions(visionTasksFileset, { baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_PATH, delegate: "GPU" }, runningMode: "VIDEO", numFaces: 1 });
+            poseLandmarker = await PoseLandmarker.createFromOptions(visionTasksFileset, { baseOptions: { modelAssetPath: POSE_LANDMARKER_MODEL_PATH, delegate: "GPU" }, runningMode: "VIDEO", numPoses: 1 });
+            handLandmarker = await HandLandmarker.createFromOptions(visionTasksFileset, { baseOptions: { modelAssetPath: HAND_LANDMARKER_MODEL_PATH, delegate: "GPU" }, runningMode: "VIDEO", numHands: 2 });
+            console.log("All models created.");
+            statusElement.textContent = 'Models loaded. Ready for file upload.';
+        } catch (error) { statusElement.textContent = `Error loading MediaPipe models: ${error}. Check console.`; console.error("Error initializing MediaPipe:", error); }
+    }
+
+    function getMouthExpressionJS(landmarks, imgWidth, imgHeight) { 
+        try {
+            const cornerLeft = landmarks[61]; const cornerRight = landmarks[291]; const lipUpper = landmarks[13]; const lipLower = landmarks[14];
+            if (!cornerLeft || !cornerRight || !lipUpper || !lipLower) return "error (landmarks)";
+            const left_y = cornerLeft.y * imgHeight; const right_y = cornerRight.y * imgHeight; const top_y = lipUpper.y * imgHeight; const bottom_y = lipLower.y * imgHeight;
+            const avg_corner_y = (left_y + right_y) / 2; const center_y = (top_y + bottom_y) / 2; const diff = avg_corner_y - center_y;
+            if (diff < -5) return "happy"; if (diff > 4.5) return "sad"; return "neutral";
+        } catch (error) { console.error("Error expression:", error); return "error"; }
+    }
+
+    function calculateDistance(pos1, pos2) { 
+        if (!pos1 || !pos2) return 0;
+        return Math.sqrt(Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2));
+    }
+
+    mediaFileElement.addEventListener('change', async (event) => { 
+        console.log("File input changed!");
+        const file = event.target.files[0]; if (!file) { console.log("No file selected."); return; }
+        console.log("Checking if models are loaded...");
+        if (!gestureRecognizer || !faceLandmarker || !poseLandmarker || !handLandmarker) { statusElement.textContent = 'Models not loaded yet.'; console.log("Models not ready yet."); return; }
+        console.log("Models appear loaded.");
+        gestureResultElement.textContent = 'N/A'; expressionResultElement.textContent = 'N/A'; motionResultElement.textContent = 'N/A';
+        uploadedImageElement.style.display = 'none'; uploadedVideoElement.style.display = 'none';
+        uploadedImageElement.src = '#'; URL.revokeObjectURL(uploadedVideoElement.src); uploadedVideoElement.src = '';
+        videoProcessingActive = false;
+        prevFramePositions = { head: null, shoulder: null, left_hand: null, right_hand: null };
+        lastMotionDetected = "None";
+
+        if (file.type.startsWith('image/')) {
+            motionResultElement.textContent = 'N/A (Requires video)'; statusElement.textContent = 'Processing image...';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageElement.src = e.target.result;
+                uploadedImageElement.onload = async () => {
+                    uploadedImageElement.style.display = 'block'; console.log("Image displayed, starting IMAGE detection...");
+                    await gestureRecognizer.setOptions({ runningMode: "IMAGE" }); await faceLandmarker.setOptions({ runningMode: "IMAGE" });
+                    try {
+                        const gestureResults = gestureRecognizer.recognize(uploadedImageElement); let detectedGesture = "None"; if (gestureResults.gestures.length > 0 && gestureResults.gestures[0].length > 0) { const topGestureName = gestureResults.gestures[0][0].categoryName; const gestureIndex = defaultGestures.indexOf(topGestureName); if (gestureIndex > -1) { detectedGesture = assignedGestures[gestureIndex]; } else if (topGestureName) { detectedGesture = `Unknown (${topGestureName})`; } } else { detectedGesture = "No hand detected"; } gestureResultElement.textContent = detectedGesture; console.log("Gesture results:", gestureResults);
+                        const faceResults = faceLandmarker.detect(uploadedImageElement); let detectedExpression = "N/A"; if (faceResults.faceLandmarks.length > 0) { const landmarks = faceResults.faceLandmarks[0]; detectedExpression = getMouthExpressionJS(landmarks, uploadedImageElement.naturalWidth, uploadedImageElement.naturalHeight); detectedExpression = detectedExpression.charAt(0).toUpperCase() + detectedExpression.slice(1); } else { detectedExpression = "No face detected"; } expressionResultElement.textContent = detectedExpression; console.log("Face results:", faceResults);
+                        statusElement.textContent = 'Image processing complete.';
+                    } catch (error) { statusElement.textContent = `Error image detection: ${error}`; console.error("Image detection error:", error); gestureResultElement.textContent = 'Error'; expressionResultElement.textContent = 'Error'; }
+                }; uploadedImageElement.onerror = () => { console.error("Error loading image tag."); statusElement.textContent = 'Error displaying image.'; }
+            }; reader.onerror = (e) => { console.error("FileReader error:", e); statusElement.textContent = 'Error reading file.'; }; reader.readAsDataURL(file);
+        }
+        
+        else if (file.type.startsWith('video/')) {
+            statusElement.textContent = 'Loading video...';
+            const videoURL = URL.createObjectURL(file); uploadedVideoElement.src = videoURL; uploadedVideoElement.style.display = 'block';
+            uploadedVideoElement.onloadeddata = async () => {
+                console.log("Video metadata loaded."); statusElement.textContent = 'Video loaded. Press play to start processing.';
+                await gestureRecognizer.setOptions({ runningMode: "VIDEO" }); await faceLandmarker.setOptions({ runningMode: "VIDEO" }); await poseLandmarker.setOptions({ runningMode: "VIDEO" }); await handLandmarker.setOptions({ runningMode: "VIDEO" });
+                console.log("Models set to VIDEO mode.");
+            };
+             uploadedVideoElement.onplay = () => { console.log("Video playing, starting detection loop."); statusElement.textContent = 'Processing video...'; videoProcessingActive = true; lastVideoTime = -1; requestAnimationFrame(predictVideoFrame); };
+             uploadedVideoElement.onpause = () => { videoProcessingActive = false; console.log("Video paused/ended, stopping detection loop."); statusElement.textContent = 'Video paused.';};
+             uploadedVideoElement.onended = () => { videoProcessingActive = false; console.log("Video ended, stopping detection loop."); statusElement.textContent = 'Video finished.';};
+             uploadedVideoElement.onerror = () => { console.error("Error loading video."); statusElement.textContent = 'Error loading video file.'; URL.revokeObjectURL(uploadedVideoElement.src); };
+        } else { statusElement.textContent = 'Unsupported file type.'; console.log("Unsupported file type:", file.type); }
+    });
+
+    async function predictVideoFrame() {
+        if (!videoProcessingActive) return;
+
+        const video = uploadedVideoElement;
+        if (video.paused || video.ended) { videoProcessingActive = false; return; }
+
+        const nowInMs = performance.now();
+        if (video.currentTime !== lastVideoTime) {
+            lastVideoTime = video.currentTime;
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+
+            const poseResults = poseLandmarker.detectForVideo(video, nowInMs);
+            const handResults = handLandmarker.detectForVideo(video, nowInMs);
+            const gestureResults = gestureRecognizer.recognizeForVideo(video, nowInMs);
+            const faceResults = faceLandmarker.detectForVideo(video, nowInMs);
+
+            let currentMotionPart = null;
+
+            if (poseResults.landmarks && poseResults.landmarks.length > 0) {
+                const landmarks = poseResults.landmarks[0];
+                const NOSE = 0;
+                const LEFT_SHOULDER = 11;
+
+                const getPixelPos = (index) => {
+                     if (index < landmarks.length && landmarks[index].visibility > 0.1) {
+                         return { x: landmarks[index].x * videoWidth, y: landmarks[index].y * videoHeight };
+                     } return null;
+                };
+
+                const currentHeadPos = getPixelPos(NOSE);
+                
+                const currentShoulderPos = getPixelPos(LEFT_SHOULDER);
+
+                if (currentHeadPos && prevFramePositions.head) {
+                    const dist = calculateDistance(currentHeadPos, prevFramePositions.head);
+                    if (dist > motionThreshold) currentMotionPart = "head movement detected";
+                }
+                if(currentHeadPos) prevFramePositions.head = currentHeadPos; 
+                if (currentShoulderPos && prevFramePositions.shoulder) {
+                    const dist = calculateDistance(currentShoulderPos, prevFramePositions.shoulder);
+                    
+                    console.log(`Shoulder Visibility: >0.1, Movement: ${dist.toFixed(2)}, Threshold: ${motionThreshold}`);
+                    if (dist > motionThreshold) currentMotionPart = "body movement detected"; 
+                }
+                 if(currentShoulderPos) prevFramePositions.shoulder = currentShoulderPos; 
+            }
+
+            console.log("Number of hands detected:", handResults.landmarks.length);
+            if (handResults.landmarks && handResults.landmarks.length > 0) {
+                 const handedness = handResults.handedness || [];
+                 for (let i = 0; i < handResults.landmarks.length; i++) {
+                     const handLandmarks = handResults.landmarks[i];
+                     const WRIST = 0; 
+                     console.log(`Hand ${i} Wrist Visibility: ${handLandmarks[WRIST]?.visibility?.toFixed(2)}`);
+
+                     if (WRIST < handLandmarks.length) { 
+                         const wrist = handLandmarks[WRIST];
+                         
+                         if (wrist) {
+                             const currentHandPos = { x: wrist.x * videoWidth, y: wrist.y * videoHeight };
+                             let handLabel = "unknown_hand";
+                             if (handedness.length > i && handedness[i].length > 0) { handLabel = handedness[i][0].categoryName === "Left" ? "left_hand" : "right_hand"; }
+                             else { handLabel = wrist.x < 0.5 ? "left_hand" : "right_hand"; }
+                             const prevPos = prevFramePositions[handLabel];
+                             if (prevPos) {
+                                 const dist = calculateDistance(currentHandPos, prevPos);
+                                 console.log(`Hand (${handLabel}) Wrist Movement: ${dist.toFixed(2)}, Threshold: ${motionThreshold}`);
+                                 if (dist > motionThreshold) currentMotionPart = "hand movement detected";
+                             }
+                             prevFramePositions[handLabel] = currentHandPos;
+                         } else {
+                              console.log(`Hand ${i} Wrist landmark object invalid.`);
+                         }
+                     }
+                    
+                 }
+            }
+
+           
+            let detectedGesture = "N/A";
+            if (gestureResults.gestures.length > 0 && gestureResults.gestures[0].length > 0) { 
+                const topGestureName = gestureResults.gestures[0][0].categoryName; const gestureIndex = defaultGestures.indexOf(topGestureName); if (gestureIndex > -1) { detectedGesture = assignedGestures[gestureIndex]; } else if (topGestureName && topGestureName !== 'None') { detectedGesture = `Unknown (${topGestureName})`; } else { detectedGesture = "No gesture"; } } else if (gestureResults.handedness.length > 0) { detectedGesture = "No gesture"; } else { detectedGesture = "No hand"; } gestureResultElement.textContent = detectedGesture;
+
+            let detectedExpression = "N/A";
+            if (faceResults.faceLandmarks.length > 0) { 
+                const landmarks = faceResults.faceLandmarks[0]; detectedExpression = getMouthExpressionJS(landmarks, videoWidth, videoHeight); detectedExpression = detectedExpression.charAt(0).toUpperCase() + detectedExpression.slice(1); } else { detectedExpression = "No face"; } expressionResultElement.textContent = detectedExpression;
+
+            if (currentMotionPart) {
+                motionResultElement.textContent = currentMotionPart;
+                lastMotionDetected = currentMotionPart;
+                console.log("Motion Detected:", currentMotionPart);
+            } else {
+                 if (lastMotionDetected != "None") { motionResultElement.textContent = `Last: ${lastMotionDetected}`; }
+                 else { motionResultElement.textContent = "No significant motion"; }
+            }
+        }
+
+        requestAnimationFrame(predictVideoFrame);
+    }
+
+    initializeMediaPipe();
+
+</script>
+{% endblock %} {# End of block scripts #}
+
+

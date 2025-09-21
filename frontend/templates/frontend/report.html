@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Log - PatientCare System{% endblock %}
+
+{% block content %}
+    <h1>Daily Activity Log</h1>
+
+    {% if logs %}
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Type</th>
+                <th>Details</th> {# Renamed from Content #}
+            </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.0 }}</td> {# Timestamp #}
+            <td>{{ log.1|capfirst }}</td> {# Type - Capitalized #}
+            <td>{{ log.2 }}</td> {# Content/Details #}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No activity logged yet.</p>
+    {% endif %}
+
+    <br>
+    {# Used link-btn class for consistent styling #}
+    <a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+{% endblock %}

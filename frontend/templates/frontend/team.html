@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Team & Credits - PatientCare System{% endblock %}
+
+{% block content %}
+    <h1>Team & Credits</h1>
+
+    <h2>Project Team</h2>
+    <div class="team-photos-container">
+        <div class="team-member">
+             {# Added id="my-photo" to your image tag #}
+             <img id="my-photo" src="{% static 'images/mk.jpeg' %}" alt="Mukesh Kumar J" class="team-photo slide-in-left">
+             <p>Mukesh Kumar J</p> {# Optional: Add name/role below photo #}
+        </div>
+        <div class="team-member">
+             {# Teammate's image tag - no id needed here #}
+             <img src="{% static 'images/pk.jpeg' %}" alt="Pradeep Kumar M" class="team-photo slide-in-right">
+             <p>Pradeep Kumar M</p> {# Optional: Add name/role below photo #}
+        </div>
+    </div>
+
+    <h2>Technologies Used</h2>
+    <ul>
+        <li>Python</li>
+        <li>Django Web Framework</li>
+        <li>OpenCV (cv2)</li>
+        <li>MediaPipe (by Google)</li>
+        <li>SQLite3</li>
+        <li>HTML/CSS/JavaScript (for frontend)</li>
+        <li>PyQt5 (for standalone log viewer, though not used in web version)</li>
+    </ul>
+
+     <h2>Acknowledgements</h2>
+     <p>
+         We would like to thank Mrs.M Vetripriya mam for supervising and guiding us throughout the project.
+     </p>
+
+    <br>
+    <a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    h2 { margin-top: 2rem; margin-bottom: 1rem; }
+    ul { list-style: disc; margin-left: 2rem; text-align: left;}
+</style>
+{% endblock %}

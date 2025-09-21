@@ -1,0 +1,60 @@
+{# Save as frontend/templates/frontend/view_recordings.html #}
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %} {# ** REQUIRED for localtime filter ** #}
+
+{% block title %}View Recordings{% endblock %}
+
+{% block content %}
+    <h1>Session Recordings</h1>
+
+    {% if error_message %}
+        <p style="color: red;">Error: {{ error_message }}</p>
+        <p>Ensure the 'media/recordings' directory exists in your project and the web server has permission to read it.</p>
+    {% endif %}
+
+    {% if recordings %}
+        <p>Click filename to download and view recordings.</p>
+        <table class="recordings-table">
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Date Modified</th>
+                    <th>Size (MB)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for recording in recordings %}
+                <tr>
+                    <td><a href="{{ recording.url }}" target="_blank" rel="noopener noreferrer">{{ recording.name }}</a></td>
+                    {# ** Use localtime filter ** #}
+                    <td>{{ recording.modified_time|localtime|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ recording.size_mb }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+         {% if not error_message %}
+            <p>No recordings found in the recordings directory.</p>
+            <p>(Run the detection script via 'Start Detection' to create recordings).</p>
+         {% endif %}
+    {% endif %}
+
+    <br>
+    <a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .recordings-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); background-color: white; border-radius: 8px; overflow: hidden; text-align: left; }
+    .recordings-table th, .recordings-table td { padding: 12px 15px; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
+    .recordings-table thead th { background-color: #e9ecef; color: #495057; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .recordings-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+    .recordings-table tbody tr:last-child td { border-bottom: none; }
+    .recordings-table tbody tr:hover { background-color: #e9ecef; }
+    .recordings-table a { color: #0056b3; text-decoration: none; font-weight: 500; }
+    .recordings-table a:hover { text-decoration: underline; }
+</style>
+{% endblock %}

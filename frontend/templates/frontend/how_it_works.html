@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+...
+<img src="{% static 'images/gesture_example.png' %}" alt="Hand Gesture Detection Example" style="max-width: 80%; margin: 1rem 0;">
+
+<img src="{% static 'images/expression_example.png' %}" alt="Facial Expression Detection Example" style="max-width: 80%; margin: 1rem 0;">
+
+<img src="{% static 'images/motion_example.png' %}" alt="Motion Detection Example" style="max-width: 80%; margin: 1rem 0;">
+
+
+{% block title %}How It Works - PatientCare System{% endblock %}
+
+{% block content %}
+    <h1>How the PatientCare System Works</h1>
+
+    <p>
+        The PatientCare system uses your computer's camera and advanced libraries like MediaPipe and OpenCV to understand visual cues. It focuses on three main areas: Hand Gestures, Facial Expressions, and Motion Detection.
+    </p>
+
+    <h2>Core Features:</h2>
+    <ul>
+        <li>
+            <strong>Hand Gesture Recognition:</strong> Detects specific hand shapes (like Thumbs Up, Open Palm, Fist) and interprets them as predefined commands or messages (e.g., 'Well & Good', 'Request Doctor', 'Emergency'). This allows for quick communication without speaking.
+            </li>
+        <li>
+            <strong>Facial Expression Detection:</strong> Analyzes facial landmarks, particularly around the mouth, to determine basic expressions like 'happy', 'sad', or 'neutral'. This helps gauge the user's emotional state.
+            </li>
+        <li>
+            <strong>Motion Detection:</strong> Monitors significant movements of the head, body (hip area), and hands. If movement exceeds a certain threshold, it's logged as detected motion, potentially indicating activity or a need for attention.
+             </li>
+    </ul>
+
+    <h2>Technical Process:</h2>
+    <ol>
+        <li>The system captures video frames from the camera.</li>
+        <li>Depending on the selected mode (Hand, Face, or Motion), it processes the frame using the appropriate MediaPipe model (Hands, Face Mesh, or Pose).</li>
+        <li>For gestures, a specialized recognizer model identifies the pose. For expressions, landmark positions are calculated. For motion, changes in keypoint positions are tracked.</li>
+        <li>To avoid rapid fluctuations, the system uses a buffer to determine the most consistent detection over a short period.</li>
+        <li>Detected events (gestures, expressions, motion) are announced verbally using text-to-speech and logged with a timestamp in a local database (`activity_log.db`).</li>
+        <li>The web interface allows starting the detection and viewing the logged activity.</li>
+    </ol>
+
+    <br>
+    <a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    ul, ol {
+        text-align: left;
+        margin-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    li {
+        margin-bottom: 0.8rem;
+    }
+    h2 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

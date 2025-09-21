@@ -1,0 +1,60 @@
+{# ** Important: Create this file at this exact path! ** #}
+{# eldercare_project/frontend/templates/registration/login.html #}
+
+{% extends 'base.html' %}
+
+{% block title %}Login - PatientCare System{% endblock %}
+
+{% block content %}
+  <div style="max-width: 400px; margin: 2rem auto; padding: 2rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"> {# Added basic container styling #}
+      <h2 style="text-align: center; margin-bottom: 1.5rem; color: #0056b3;">Admin Login</h2> {# Centered heading #}
+
+      {% if form.errors %}
+        <p style="color: #dc3545; text-align: center; margin-bottom: 1rem;">Your username and password didn't match. Please try again.</p> {# Improved error styling #}
+      {% endif %}
+
+      {% if next %}
+        {% if user.is_authenticated %}
+          <p style="text-align: center; color: #ffc107;">Your account doesn't have access to this page. Please login with an admin account.</p> {# Warning color #}
+        {% else %}
+          <p style="text-align: center; color: #17a2b8;">Please login to see the requested page.</p> {# Info color #}
+        {% endif %}
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}" style="display: flex; flex-direction: column; gap: 1rem;"> {# Flex column layout #}
+        {% csrf_token %}
+
+        <div> {# Wrap label and input #}
+            {{ form.username.label_tag }}
+            {{ form.username }}
+        </div>
+        <div> {# Wrap label and input #}
+            {{ form.password.label_tag }}
+            {{ form.password }}
+        </div>
+
+        {# Apply button classes and center it #}
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem; align-self: center;">Login</button>
+        <input type="hidden" name="next" value="{{ next }}">
+      </form>
+  </div>
+
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    #id_username, #id_password {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+        margin-top: 0.25rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-sizing: border-box; 
+    }
+    label {
+        font-weight: 500;
+        color: #495057;
+    }
+</style>
+{% endblock %}

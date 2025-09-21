@@ -1,0 +1,311 @@
+/* frontend/static/css/style.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&family=Nunito+Sans:wght@400;600&display=swap');
+
+@keyframes backgroundAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+body {
+    font-family: 'Nunito Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #343a40;
+    line-height: 1.6;
+    background: linear-gradient(-45deg, #05d2f1,  #d84d5d, #01ffaa);
+    background-size: 400% 400%;
+    animation: backgroundAnimation 25s ease infinite;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: #0056b3;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.logo {
+    font-family: 'Poppins', sans-serif;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+.nav-links a {
+    color: white;
+    margin-left: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    padding-bottom: 5px;
+    transition: opacity 0.2s ease;
+}
+
+.nav-links a:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+.nav-links a.active {
+    font-weight: 700;
+    border-bottom: 2px solid white;
+}
+
+.container {
+    max-width: 850px; /* Keep widened container */
+    width: 90%;
+    margin: 4rem auto;
+    padding: 2.5rem;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    flex-grow: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-family: 'Poppins', sans-serif;
+    color: #0056b3;
+    margin-bottom: 1.5rem;
+    font-size: 2.2rem;
+    text-align: center;
+    width: 100%;
+}
+
+p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    color: #495057;
+    text-align: center;
+     width: 100%;
+}
+
+.btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-decoration: none;
+    cursor: pointer;
+    margin: 5px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    display: inline-block;
+    line-height: 1.5;
+}
+
+.btn-primary {
+    background-color: #0056b3;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 86, 179, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #004a99;
+    box-shadow: 0 4px 8px rgba(0, 86, 179, 0.4);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    box-shadow: 0 2px 5px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+form button[type="submit"] {
+     margin-top: 1rem;
+}
+
+
+table {
+    width: 100%; /* Use 100% now container is wider */
+    max-width: 100%;
+    border-collapse: collapse; /* Important for border styling */
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden; /* Clip content to rounded corners */
+    /* text-align: left; */ /* Remove default text-align */
+    display: table;
+    box-sizing: border-box;
+    /* Optional: Add an outer border to the table itself */
+    /* border: 1px solid #dee2e6; */
+}
+
+th, td {
+    padding: 12px 10px; /* Keep reduced padding */
+    /* *** MODIFIED: Add border and center text *** */
+    border: 1px solid #dee2e6; /* Apply border to all sides */
+    text-align: center; /* Center text */
+    /* ****************************************** */
+    vertical-align: middle;
+}
+
+thead th {
+    background-color: #e9ecef;
+    color: #495057;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    /* Border is now handled by the general th, td rule above */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa; /* Keep alternating row color */
+}
+
+/* *** REMOVED: Rule for last child border-bottom is no longer needed *** */
+/* tbody tr:last-child td { */
+/* border-bottom: none; */
+/* } */
+/* ******************************************************************* */
+
+
+tbody tr:hover {
+    background-color: #e9ecef; /* Keep hover effect */
+}
+
+.link-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px rgba(108, 117, 125, 0.3);
+}
+
+.link-btn:hover {
+    background-color: #5a6268;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+.team-photos-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+    overflow-x: hidden;
+    padding: 1rem 0;
+    width: 100%;
+}
+
+.team-member {
+    text-align: center;
+    margin: 1rem;
+    flex-basis: 200px;
+    flex-grow: 1;
+    max-width: 45%;
+}
+
+.team-photo {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    object-position: 50% 0;
+    border-radius: 50%;
+    border: 4px solid #0056b3;
+    margin-bottom: 0.8rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.team-member p {
+    font-weight: 500;
+    color: #343a40;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+#my-photo {
+    object-position: 50% 10%;
+}
+
+/* Styles for animations (Keep as is) */
+.slide-in-left,
+.slide-in-right {
+    opacity: 0;
+}
+
+.slide-in-left {
+    transform: translateX(-100%);
+    animation: slideInLeft 1s ease-out 0.2s 1 forwards;
+}
+
+.slide-in-right {
+    transform: translateX(100%);
+    animation: slideInRight 1s ease-out 0.2s 1 forwards;
+}
+
+@keyframes slideInLeft {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Style for logout button in navbar */
+.nav-logout-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    margin-left: 25px;
+    color: white;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    vertical-align: baseline;
+    transition: opacity 0.2s ease;
+}
+
+.nav-logout-btn:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+/* Ensure elements within the flex container that need specific text alignment get it */
+.results-container-js, .upload-area /* Add other specific divs if needed */ {
+    width: 100%;
+    text-align: left; /* Keep left align for these other sections */
+}
+.upload-area {
+    text-align: center;
+}

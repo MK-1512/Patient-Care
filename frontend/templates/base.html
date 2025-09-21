@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PatientCare System{% endblock %}</title>
+    {# Link to your main stylesheet #}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {# Block for adding extra head elements like specific styles for a page #}
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">PatientCare</div>
+        <div class="nav-links">
+            {# --- Navigation Links --- #}
+            <a href="{% url 'index' %}" {% if request.resolver_match.url_name == 'index' %}class="active"{% endif %}>Home</a>
+
+            {# --- Activity Log Link (Conditional - Admin Only) --- #}
+            {% if user.is_authenticated and user.is_superuser %} {# Keep original condition #}
+                <a href="{% url 'activity_report' %}" {% if request.resolver_match.url_name == 'activity_report' %}class="active"{% endif %}>Activity Log</a>
+            {% endif %}
+            {# --- End Activity Log Link --- #}
+
+            <a href="{% url 'upload_image_js' %}" {% if request.resolver_match.url_name == 'upload_image_js' %}class="active"{% endif %}>Upload Media</a>
+
+            {# --- View Recordings Link (Conditional - Admin Only) --- #}
+            {% if user.is_authenticated and user.is_superuser %} {# ADDED condition #}
+                <a href="{% url 'view_recordings' %}" {% if request.resolver_match.url_name == 'view_recordings' %}class="active"{% endif %}>View Recordings</a>
+            {% endif %}
+            {# --- End View Recordings Link --- #}
+
+            <a href="{% url 'how_it_works' %}" {% if request.resolver_match.url_name == 'how_it_works' %}class="active"{% endif %}>How It Works</a>
+            <a href="{% url 'team' %}" {% if request.resolver_match.url_name == 'team' %}class="active"{% endif %}>Team/Credits</a>
+            <a href="{% url 'contact' %}" {% if request.resolver_match.url_name == 'contact' %}class="active"{% endif %}>Contact Us</a>
+
+            {# --- Conditional Login/Logout Links --- #}
+            {% if user.is_authenticated %}
+                {# Logout Form (uses POST) #}
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    {# Button styled to look like a link #}
+                    <button type="submit" class="nav-logout-btn">Logout ({{ user.username }})</button>
+                </form>
+            {% else %}
+                {# Login Link #}
+                {# Using 'login' URL name as per your original base.html file #}
+                <a href="{% url 'login' %}">Admin Login</a>
+            {% endif %}
+            {# --- End Conditional Links --- #}
+        </div>
+    </div>
+
+    <div class="container">
+        {# Main content block for child templates #}
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    {# Block for adding JavaScript at the end of the body #}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

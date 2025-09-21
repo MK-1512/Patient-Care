@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About - PatientCare System{% endblock %}
+
+{% block content %}
+    <h1>About PatientCare Project</h1>
+    <p>
+        This system utilizes computer vision and machine learning techniques through MediaPipe and OpenCV
+        to detect hand gestures, facial expressions, and significant motion.
+    </p>
+    <p>
+        The goal is to provide a non-intrusive way to monitor the well-being of Patients and enable them
+        to communicate needs or distress signals easily, especially in emergency situations. Activity is logged
+        for review by caregivers.
+    </p>
+    <br>
+    {# Used link-btn class for consistent styling #}
+    <a href="{% url 'index' %}" class="link-btn">Back to Home</a>
+{% endblock %}
