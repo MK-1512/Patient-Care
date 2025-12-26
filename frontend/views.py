@@ -3,16 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.conf import settings
 import os
-import datetime # Needed for datetime.timezone.utc
-from django.utils import timezone # Django's timezone functions
-# import pytz # Only needed if doing complex timezone logic beyond settings.TIME_ZONE
+import datetime
+from django.utils import timezone
 import sqlite3
 import subprocess
 
-# Define path to the activity log database relative to BASE_DIR from settings
 ACTIVITY_DB_PATH = os.path.join(settings.BASE_DIR, 'activity_log.db')
 
-# --- View Functions ---
 
 def index(request):
     """Renders the main welcome page."""
@@ -31,13 +28,11 @@ def run_detection(request):
                 print(f"Error launching detection script: {e}")
         else:
             print(f"Error: Script not found at {script_path}")
-    # Always redirect back to index page
-    return redirect('index') # Assumes 'index' is the name of your index URL pattern
+    return redirect('index')
 
-@login_required # Requires login
+@login_required
 def activity_report(request):
     """Displays the activity log. Admin only."""
-    # Requires superuser status
     if not request.user.is_superuser:
         return HttpResponseForbidden("Access Denied: You do not have permission to view this page.")
 
@@ -46,7 +41,6 @@ def activity_report(request):
         error_message = f"DB not found: {ACTIVITY_DB_PATH}"
         print(error_message)
     else:
-        # Robust connection handling (try read-only first)
         try:
             conn_log = sqlite3.connect(f"file:{ACTIVITY_DB_PATH}?mode=ro", uri=True, check_same_thread=False)
             cursor_log = conn_log.cursor(); print("Connected to activity DB (read-only).")
@@ -68,23 +62,19 @@ def activity_report(request):
     context = { 'logs': logs, 'error_message': error_message }
     return render(request, 'frontend/report.html', context)
 
-# --- Other simple static views ---
 def how_it_works(request): return render(request, 'frontend/how_it_works.html')
 def contact(request): return render(request, 'frontend/contact.html')
 def team(request): return render(request, 'frontend/team.html')
 def image_upload_js_view(request): return render(request, 'frontend/upload_image_js.html')
 
 
-# --- Corrected view_recordings Function ---
-@login_required # Requires login
+@login_required
 def view_recordings(request):
     """Lists recorded video files, sorted newest first. Admin only."""
 
-    # Requires superuser status
     if not request.user.is_superuser:
         return HttpResponseForbidden("Access Denied: You do not have permission to view recordings.")
 
-    # Ensure MEDIA_ROOT is set correctly in settings.py
     recordings_dir_abs_path = os.path.join(settings.MEDIA_ROOT, "recordings")
     recordings_data = []
     error_message = None
@@ -98,25 +88,21 @@ def view_recordings(request):
         try:
             all_files = os.listdir(recordings_dir_abs_path)
             video_filenames = [f for f in all_files if f.lower().endswith(('.mp4', '.avi', '.mov')) and not f.startswith('.')]
-            sorted_video_filenames = sorted(video_filenames, reverse=True) # Sort newest first
+            sorted_video_filenames = sorted(video_filenames, reverse=True)
             print(f"--- [View Recordings] Processing {len(sorted_video_filenames)} sorted video files...")
 
             for filename in sorted_video_filenames:
                 file_path = os.path.join(recordings_dir_abs_path, filename)
                 try:
                     file_stat = os.stat(file_path)
-                    # Ensure MEDIA_URL is set correctly in settings.py (e.g., '/media/')
                     file_url = f"{settings.MEDIA_URL}recordings/{filename}"
-                    # Get modification time (UTC timestamp)
                     naive_utc_dt = datetime.datetime.utcfromtimestamp(file_stat.st_mtime)
-                    # Make it timezone-aware using standard library UTC object
                     aware_utc_dt = timezone.make_aware(naive_utc_dt, datetime.timezone.utc)
-                    # Convert to project's local timezone
                     try:
                         local_dt = timezone.localtime(aware_utc_dt)
                     except Exception as tz_conv_err:
                          print(f"Warn: TZ Conv Err: {tz_conv_err}. Using UTC.")
-                         local_dt = aware_utc_dt # Fallback
+                         local_dt = aware_utc_dt
 
                     recordings_data.append({
                         'name': filename,
@@ -132,5 +118,4 @@ def view_recordings(request):
 
     print(f"--- [View Recordings] Found {len(recordings_data)} recordings to display.")
     context = {'recordings': recordings_data, 'error_message': error_message, }
-    # Ensure the template path is correct
     return render(request, 'frontend/view_recordings.html', context)
